@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Ana renkler */
+  --background-primary: #36393f;
+  --background-secondary: #2f3136;
+  --background-tertiary: #202225;
+  
+  /* Metin renkleri */
+  --text-normal: #dcddde;
+  --text-muted: #72767d;
+  --text-link: #00b0f4;
+  
+  /* Vurgu renkleri */
+  --brand: #5865f2;
+  --brand-hover: #4752c4;
+  
+  /* Durum renkleri */
+  --online: #3ba55d;
+  --idle: #faa81a;
+  --dnd: #ed4245;
+  
+  /* Kanal renkleri */
+  --channel-default: #96989d;
+  --channel-hover: #dcddde;
+  
+  /* Diğer */
+  --header-primary: #fff;
+  --header-secondary: #b9bbbe;
+  --interactive-normal: #b9bbbe;
+  --interactive-hover: #dcddde;
+  --interactive-active: #fff;
+}
+
+body {
+  @apply bg-[var(--background-primary)] text-[var(--text-normal)];
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Özel scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--background-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--background-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--background-secondary);
+}
+
+/* Özel sınıflar */
+.channel-name {
+  @apply text-[var(--channel-default)] hover:text-[var(--channel-hover)] transition-colors;
+}
+
+.sidebar {
+  @apply bg-[var(--background-secondary)] w-60 h-screen flex flex-col;
+}
+
+.server-list {
+  @apply bg-[var(--background-tertiary)] w-[72px] h-screen flex flex-col items-center pt-3;
+}
+
+.content-area {
+  @apply bg-[var(--background-primary)] flex-1 h-screen;
+}
+
+.message-input {
+  @apply bg-[#40444b] rounded-lg p-4 text-[var(--text-normal)] placeholder-[var(--text-muted)];
+}
+
+.user-avatar {
+  @apply rounded-full w-8 h-8 flex items-center justify-center text-white font-medium;
+}
