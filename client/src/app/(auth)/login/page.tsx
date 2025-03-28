@@ -4,11 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
+import { loginUser } from '@/api/auth';
 import { setUser } from '@/redux/slices/authslice';
 
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,17 +19,33 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Şimdilik statik giriş
-    dispatch(setUser({
-      id: '1',
-      username: 'test_user',
-      email: formData.email,
-    }));
-    router.push('/channels/general');
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await dispatch(loginUser(formData)).unwrap();
+      
+      dispatch(setUser({
+        id: result._id,
+        username: result.name,
+        email: result.email
+      }));
+
+      router.push('/channels/general');
+    } catch (error: any) {
+      setError(error.message || error?.response?.data?.message || 'Giriş yapılırken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      {error && (
+        <div className="bg-red-500/10 text-red-500 p-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
       <div className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-[var(--text-normal)]">
@@ -63,9 +82,10 @@ export default function LoginPage() {
       <div>
         <button
           type="submit"
-          className="w-full rounded-md bg-[var(--brand)] px-4 py-2 text-white hover:bg-[var(--brand-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2"
+          disabled={loading}
+          className="w-full rounded-md bg-[var(--brand)] px-4 py-2 text-white hover:bg-[var(--brand-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 disabled:opacity-50"
         >
-          Giriş Yap
+          {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
         </button>
       </div>
 
