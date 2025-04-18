@@ -1,7 +1,9 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const http = require('http');
 const connectDB = require('./config/db');
+const initializeSocket = require('./socket');
 
 // Environment variables
 dotenv.config();
@@ -18,6 +20,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/channels', require('./routes/channelRoutes'));
 
 // Test route
 app.get('/', (req, res) => {
@@ -34,8 +37,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Server
+// HTTP Server (Socket.io için)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server: ${PORT}`));
+const server = http.createServer(app);
 
-module.exports = app;
+// Socket.io başlat
+const io = initializeSocket(server);
+
+// Server'ı dinle
+server.listen(PORT, () => console.log(`Server: ${PORT}`));
+
+module.exports = { app, server, io };

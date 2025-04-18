@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/redux/provider";
+import { SocketProvider } from '@/context/SocketContext';
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -22,7 +23,9 @@ export default function RootLayout({
     <html lang="tr" className={inter.variable}>
       <body>
         <Providers>
-          {children}
+          <SocketProvider>
+            {children}
+          </SocketProvider>
         </Providers>
       </body>
     </html>

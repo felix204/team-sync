@@ -1,31 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { mockMessages } from '@/data/mockData';
-import { Message } from '@/types';
+import MessageBox from '@/components/chat/MessageBox';
+
+// Script'ten dönen gerçek kanal ID'sini kullanıyoruz
+const GENERAL_CHANNEL_ID = '6802d78d46458d930be5cb97'; 
 
 export default function GeneralChat() {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Gerekli değilse false yapabiliriz
+  const [channelId, setChannelId] = useState(GENERAL_CHANNEL_ID);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+  // Sayfa yüklendiğinde genel kanalı al (opsiyonel)
+  // useEffect(() => {
+  //   const fetchGeneralChannel = async () => {
+  //     try {
+  //       const response = await fetch('/api/channels?name=Genel%20Sohbet');
+  //       const data = await response.json();
+  //       if (data && data.length > 0) {
+  //         setChannelId(data[0]._id);
+  //       }
+  //     } catch (error) {
+  //       console.error('Kanal bilgisi alınamadı:', error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+  //   
+  //   fetchGeneralChannel();
+  // }, []);
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      userId: user?.id || '',
-      timestamp: new Date().toISOString(),
-      channelId: 'general'
-    };
-
-    setMessages([...messages, message]);
-    setNewMessage('');
-  };
+  // Şimdilik loading ekranını kaldırdık
+  // if (isLoading) {
+  //   return <div className="flex justify-center items-center h-full">Yükleniyor...</div>;
+  // }
 
   return (
     <div className="flex flex-col h-full">
@@ -34,46 +44,8 @@ export default function GeneralChat() {
         <h1 className="text-[var(--header-primary)] font-semibold"># Genel Sohbet</h1>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div key={message.id} className="flex items-start space-x-4">
-            <div className="user-avatar bg-[var(--brand)]">
-              {message.userId === user?.id ? 'S' : 'O'}
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-[var(--header-primary)] font-medium">
-                  {message.userId === user?.id ? 'Sen' : 'Diğer Kullanıcı'}
-                </span>
-                <span className="text-xs text-[var(--text-muted)]">
-                  {new Date(message.timestamp).toLocaleTimeString()}
-                </span>
-              </div>
-              <p className="text-[var(--text-normal)]">{message.content}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Message Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-[var(--background-tertiary)]">
-        <div className="flex space-x-4">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Mesajınızı yazın..."
-            className="message-input flex-1"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-[var(--brand)] text-white rounded-md hover:bg-[var(--brand-hover)] transition-colors"
-          >
-            Gönder
-          </button>
-        </div>
-      </form>
+      {/* Mesaj Kutusu - Socket.io entegrasyonu ile */}
+      <MessageBox channelId={channelId} />
     </div>
   );
 } 

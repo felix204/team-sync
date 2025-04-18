@@ -1,5 +1,6 @@
 const User = require('../model/userModel');
 const generateToken = require('../utils/generateToken');
+const Message = require('../model/messageModel');
 
 // @desc    Kullanıcı authenticate et ve token döndür
 // @route   POST /api/users/login
@@ -72,4 +73,24 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { authUser, registerUser, getUserProfile };
+// @desc    Kullanıcının günlük mesaj sayısını döndür
+// @route   GET /api/users/message-count
+// @access  Private
+const getMessageCount = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const count = await Message.countDocuments({
+      user: req.user._id,
+      createdAt: { $gte: today }
+    });
+    
+    res.json({ count });
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+};
+
+module.exports = { authUser, registerUser, getUserProfile, getMessageCount };
