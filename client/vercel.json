@@ -1,0 +1,4 @@
+{
+  "buildCommand": "CI=false next build",
+  "ignoreCommand": "npx next lint --ignore-path .gitignore >/dev/null 2>&1"
+} 
