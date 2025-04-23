@@ -26,8 +26,8 @@ const loginUser = createAsyncThunk(
             // Token'ı localStorage'a kaydet
             localStorage.setItem('token', response.data.token);
             return response.data;
-        } catch (error: any) {
-            return rejectWithValue(error.response.data.message || 'Giriş başarısız');
+        } catch (error: unknown) {
+            return rejectWithValue((error as any).response?.data?.message || 'Giriş başarısız');
         }
     }
 );
@@ -40,8 +40,8 @@ const registerUser = createAsyncThunk(
             const response = await axios.post(`${BASE_URL}/register`, credentials);
             localStorage.setItem('token', response.data.token);
             return response.data;
-        } catch (error: any) {
-            return rejectWithValue(error.response.data.message || 'Kayıt başarısız');
+        } catch (error: unknown) {
+            return rejectWithValue((error as any).response?.data?.message || 'Kayıt başarısız');
         }
     }
 );
@@ -56,8 +56,8 @@ const getProfile = createAsyncThunk(
                 headers: { Authorization: `Bearer ${token}` }
             });
             return response.data;
-        } catch (error: any) {
-            return rejectWithValue(error.response.data.message || 'Profil bilgileri alınamadı');
+        } catch (error: unknown) {
+            return rejectWithValue((error as any).response?.data?.message || 'Profil bilgileri alınamadı');
         }
     }
 );

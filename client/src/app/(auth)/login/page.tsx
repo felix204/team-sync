@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { loginUser } from '@/api/auth';
 import { setUser } from '@/redux/slices/authslice';
+import { AppDispatch } from '@/redux/store';
 
 export default function LoginPage() {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,8 +33,8 @@ export default function LoginPage() {
       }));
 
       router.push('/channels/general');
-    } catch (error: any) {
-      setError(error.message || error?.response?.data?.message || 'Giriş yapılırken bir hata oluştu');
+    } catch (error: unknown) {
+      setError((error as any).message || (error as any)?.response?.data?.message || 'Giriş yapılırken bir hata oluştu');
     } finally {
       setLoading(false);
     }

@@ -21,7 +21,7 @@ export default function AuthLayout({
             />
           </div>
           <h2 className="text-2xl font-bold text-[var(--header-primary)]">
-            TeamSync'e Hoş Geldiniz
+            TeamSync&apos;e Hoş Geldiniz
           </h2>
           <p className="mt-2 text-[var(--text-muted)]">
             Ekibinizle gerçek zamanlı iletişim kurun

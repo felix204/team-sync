@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { registerUser } from '@/api/auth';
+import { AppDispatch } from '@/redux/store';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,10 +31,10 @@ export default function RegisterPage() {
 
     try {
       const { confirmPassword, ...registerData } = formData;
-      const result = await dispatch(registerUser(registerData)).unwrap();
+      await dispatch(registerUser(registerData)).unwrap();
       router.push('/channels/general');
-    } catch (error: any) {
-      setError(error || 'Kayıt olurken bir hata oluştu');
+    } catch (error: unknown) {
+      setError((error as any) || 'Kayıt olurken bir hata oluştu');
     } finally {
       setLoading(false);
     }
