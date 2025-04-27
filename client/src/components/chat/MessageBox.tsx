@@ -5,9 +5,15 @@ import { useSocket } from '@/context/SocketContext';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import axios from 'axios';
+import React from 'react';
 
 interface MessageBoxProps {
   channelId: string;
+}
+
+interface Channel {
+  id: string;
+  name: string;
 }
 
 export default function MessageBox({ channelId }: MessageBoxProps) {
@@ -16,8 +22,34 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { socket, isConnected, messages, sendMessage, joinChannel, leaveChannel, fetchChannelMessages } = useSocket();
+  const { socket, isConnected, messages: socketMessages, sendMessage, joinChannel, leaveChannel, fetchChannelMessages, setMessages } = useSocket();
   const { user } = useSelector((state: RootState) => state.auth);
+  
+  // Mesajları temizleme fonksiyonu
+  const clearMessages = () => {
+    if (window.confirm('Mesaj geçmişini temizlemek istediğinize emin misiniz?')) {
+      try {
+        const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5000';
+        const token = localStorage.getItem('token');
+        
+        if (!token || !channelId) return;
+        
+        axios.delete(`${SERVER_URL}/api/channels/${channelId}/messages`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(() => {
+          setMessages([]);
+          console.log('Mesajlar başarıyla silindi');
+        })
+        .catch(error => {
+          console.error('Mesajları silme hatası:', error);
+          alert('Mesajlar silinirken bir hata oluştu');
+        });
+      } catch (error) {
+        console.error('Mesajları silme hatası:', error);
+      }
+    }
+  };
   
   // Fallback mesaj çekme fonksiyonu (fetchChannelMessages olmadığında)
   const fetchMessagesManually = useCallback(async (channelId: string) => {
@@ -139,7 +171,7 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
   // Mesajları otomatik kaydır
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [socketMessages]);
   
   // Kullanıcı ID karşılaştırma yardımcı fonksiyonu
   const isCurrentUserMessage = (messageUserId: string): boolean => {
@@ -151,14 +183,23 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
   
   return (
     <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-2 border-b">
+        <h3 className="font-semibold">{channelId}</h3>
+        <button
+          onClick={clearMessages}
+          className="text-xs px-3 py-1 rounded-md border border-[var(--background-tertiary)] hover:bg-[var(--background-secondary)]"
+        >
+          Geçmişi Temizle
+        </button>
+      </div>
       {/* Mesajlar */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
+        {socketMessages.length === 0 ? (
           <div className="text-center text-[var(--text-muted)] py-10">
             Henüz mesaj yok. İlk mesajı siz gönderin!
           </div>
         ) : (
-          messages.map((message, index) => {
+          socketMessages.map((message, index) => {
             const isOwnMessage = isCurrentUserMessage(message.userId);
             
             return (

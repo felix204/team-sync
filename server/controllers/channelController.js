@@ -78,6 +78,39 @@ const joinChannel = async (req, res) => {
   }
 };
 
+// @desc    Kanal mesajlarını sil
+// @route   DELETE /api/channels/:id/messages
+// @access  Private
+const deleteChannelMessages = async (req, res) => {
+  try {
+    const channelId = req.params.id;
+    
+    // Kanal kontrolü
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      res.status(404);
+      throw new Error('Kanal bulunamadı');
+    }
+    
+    // Kullanıcı kanalın yaratıcısı mı veya üyesi mi kontrol et
+    const isCreator = String(channel.creator) === String(req.user._id);
+    const isMember = channel.members.some(id => String(id) === String(req.user._id));
+    
+    if (!isCreator && !isMember) {
+      res.status(403);
+      throw new Error('Bu işlem için yetkiniz yok');
+    }
+    
+    // Tüm mesajları sil
+    await Message.deleteMany({ channel: channelId });
+    
+    res.json({ message: 'Tüm mesajlar başarıyla silindi' });
+  } catch (error) {
+    console.error('deleteChannelMessages hatası:', error.message);
+    res.status(400).send(error.message);
+  }
+};
+
 // @desc    Kanal mesajlarını getir
 // @route   GET /api/channels/:id/messages
 // @access  Private
@@ -137,4 +170,4 @@ const getChannelMessages = async (req, res) => {
   }
 };
 
-module.exports = { createChannel, getChannels, joinChannel, getChannelMessages }; 
+module.exports = { createChannel, getChannels, joinChannel, getChannelMessages, deleteChannelMessages }; 

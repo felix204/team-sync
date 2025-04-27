@@ -15,6 +15,7 @@ interface SocketContextType {
   sendMessage: (content: string, channelId: string) => void;
   joinChannel: (channelId: string) => void;
   leaveChannel: (channelId: string) => void;
+  setMessages: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -26,6 +27,7 @@ const SocketContext = createContext<SocketContextType>({
   sendMessage: () => {},
   joinChannel: () => {},
   leaveChannel: () => {},
+  setMessages: () => {},
 });
 
 export const useSocket = () => useContext(SocketContext);
@@ -162,7 +164,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       fetchChannelMessages,
       sendMessage,
       joinChannel,
-      leaveChannel
+      leaveChannel,
+      setMessages
     }}>
       {children}
     </SocketContext.Provider>
