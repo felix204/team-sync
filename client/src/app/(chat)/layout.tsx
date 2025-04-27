@@ -1,9 +1,11 @@
 'use client';
 
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getProfile } from '@/api/auth';
+import { setUser } from '@/redux/slices/authslice';
 
 export default function ChatLayout({
   children,
@@ -12,14 +14,45 @@ export default function ChatLayout({
 }) {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
-
+  const dispatch = useDispatch<AppDispatch>();
+  const [hasToken, setHasToken] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      setHasToken(!!token);
+      
+      if (token && !isAuthenticated) {
+        try {
+          // Token varsa ama kullanıcı bilgileri yoksa (sayfa yenilemeden sonra)
+          // Kullanıcı profilini çekip Redux'a kaydedelim
+          const profileData = await dispatch(getProfile()).unwrap();
+          dispatch(setUser({
+            id: profileData._id,
+            username: profileData.name,
+            email: profileData.email
+          }));
+        } catch (error) {
+          console.error('Profil bilgisi alınamadı:', error);
+          localStorage.removeItem('token');
+          router.push('/login');
+        }
+      } else if (!token && !isAuthenticated) {
+        router.push('/login');
+      }
+      
+      setLoading(false);
+    };
+    
+    checkAuth();
+  }, [isAuthenticated, router, dispatch]);
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return null; // Yükleme sırasında hiçbir şey gösterme
+  }
+
+  if (!isAuthenticated && !hasToken) {
     return null;
   }
 
