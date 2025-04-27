@@ -4,12 +4,14 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { io, Socket } from 'socket.io-client';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
+import axios from 'axios';
 
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   activeUsers: any[];
   messages: any[];
+  fetchChannelMessages: (channelId: string) => Promise<void>;
   sendMessage: (content: string, channelId: string) => void;
   joinChannel: (channelId: string) => void;
   leaveChannel: (channelId: string) => void;
@@ -20,6 +22,7 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
   activeUsers: [],
   messages: [],
+  fetchChannelMessages: async () => {},
   sendMessage: () => {},
   joinChannel: () => {},
   leaveChannel: () => {},
@@ -34,6 +37,42 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<any[]>([]);
   
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  
+  // API üzerinden kanal mesajlarını çek
+  const fetchChannelMessages = useCallback(async (channelId: string) => {
+    if (!isAuthenticated) return;
+    
+    console.log('fetchChannelMessages çağırıldı, channelId:', channelId);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token bulunamadı');
+      }
+      
+      const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5000';
+      const response = await axios.get(`${SERVER_URL}/api/channels/${channelId}/messages`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (response.data) {
+        setMessages(response.data);
+        console.log('Mesajlar yüklendi, sayı:', response.data.length);
+      } else {
+        setMessages([]);
+        console.log('Mesaj bulunamadı');
+      }
+    } catch (error: any) {
+      console.error('Mesajlar yüklenirken hata oluştu:', error?.message);
+      
+      // Hata detaylarını görelim
+      if (error.response) {
+        console.error('Sunucu yanıtı:', error.response.status, error.response.data);
+      }
+    }
+  }, [isAuthenticated]);
   
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -98,10 +137,15 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     if (socket && isConnected) {
       console.log(`Kanal katılma isteği: ${channelId}`);
       socket.emit('join_channel', channelId);
-      // Mesajları sıfırla (yeni kanala geçiş)
-      setMessages([]);
+      
+      // Kanala katıldığımızda mesajları çek
+      try {
+        fetchChannelMessages(channelId);
+      } catch (error) {
+        console.error('Mesaj çekme hatası:', error);
+      }
     }
-  }, [socket, isConnected]);
+  }, [socket, isConnected, fetchChannelMessages]);
   
   const leaveChannel = useCallback((channelId: string) => {
     if (socket && isConnected) {
@@ -115,6 +159,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       isConnected,
       activeUsers,
       messages,
+      fetchChannelMessages,
       sendMessage,
       joinChannel,
       leaveChannel

@@ -4,38 +4,90 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import MessageBox from '@/components/chat/MessageBox';
-
-// Script'ten dönen gerçek kanal ID'sini kullanıyoruz
-const GENERAL_CHANNEL_ID = '6802d78d46458d930be5cb97'; 
+import axios from 'axios';
 
 export default function GeneralChat() {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [isLoading, setIsLoading] = useState(false); // Gerekli değilse false yapabiliriz
-  const [channelId, setChannelId] = useState(GENERAL_CHANNEL_ID);
+  const [isLoading, setIsLoading] = useState(true);
+  const [channelId, setChannelId] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
-  // Sayfa yüklendiğinde genel kanalı al (opsiyonel)
-  // useEffect(() => {
-  //   const fetchGeneralChannel = async () => {
-  //     try {
-  //       const response = await fetch('/api/channels?name=Genel%20Sohbet');
-  //       const data = await response.json();
-  //       if (data && data.length > 0) {
-  //         setChannelId(data[0]._id);
-  //       }
-  //     } catch (error) {
-  //       console.error('Kanal bilgisi alınamadı:', error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   
-  //   fetchGeneralChannel();
-  // }, []);
+  // Sayfa yüklendiğinde kanal bilgilerini al
+  useEffect(() => {
+    async function fetchChannels() {
+      try {
+        setIsLoading(true);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Token bulunamadı');
+          setIsLoading(false);
+          return;
+        }
 
-  // Şimdilik loading ekranını kaldırdık
-  // if (isLoading) {
-  //   return <div className="flex justify-center items-center h-full">Yükleniyor...</div>;
-  // }
+        // API URL
+        const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5000';
+        
+        // Kanalları getir
+        const response = await axios.get(`${SERVER_URL}/api/channels`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        console.log('Kanallar yüklendi', response.data);
+        
+        // Genel kanalı bul
+        if (response.data && response.data.length > 0) {
+          // Adı "Genel" içeren bir kanal var mı?
+          const generalChannel = response.data.find((channel: any) => 
+            channel.name.toLowerCase().includes('genel') || 
+            channel.name.toLowerCase().includes('general')
+          );
+          
+          if (generalChannel) {
+            console.log('Genel kanal bulundu:', generalChannel);
+            setChannelId(generalChannel._id);
+          } else {
+            console.log('Genel kanal bulunamadı, ilk kanal kullanılıyor:', response.data[0]);
+            setChannelId(response.data[0]._id);
+          }
+        } else {
+          setError('Kanal bulunamadı');
+        }
+      } catch (error) {
+        console.error('Kanal verileri alınamadı', error);
+        setError('Kanal bilgileri yüklenemedi');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchChannels();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+  if (!channelId) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-gray-400">Kanal bulunamadı</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -45,7 +97,7 @@ export default function GeneralChat() {
       </div>
 
       {/* Mesaj Kutusu - Socket.io entegrasyonu ile */}
-      <MessageBox channelId={channelId} />
+      <MessageBox channelId={channelId} key={channelId} />
     </div>
   );
 } 

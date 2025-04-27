@@ -84,27 +84,55 @@ const joinChannel = async (req, res) => {
 const getChannelMessages = async (req, res) => {
   try {
     const channelId = req.params.id;
+    console.log('Mesajlar isteniyor - Kanal ID:', channelId);
+    console.log('İsteği yapan kullanıcı:', req.user?._id);
     
     // Kanal kontrolü
     const channel = await Channel.findById(channelId);
     if (!channel) {
+      console.log('Kanal bulunamadı:', channelId);
       res.status(404);
       throw new Error('Kanal bulunamadı');
     }
     
+    console.log('Kanal bulundu:', channel.name);
+    console.log('Kanal üyeleri:', channel.members.map(id => String(id)));
+    
     // Kullanıcı üye mi kontrol et
-    if (!channel.members.includes(req.user._id)) {
-      res.status(403);
-      throw new Error('Bu kanala erişim yetkiniz yok');
+    const isUserMember = channel.members.some(memberId => 
+      String(memberId) === String(req.user._id)
+    );
+    
+    console.log('Kullanıcı kanalın üyesi mi:', isUserMember);
+    
+    // Kullanıcı kanalın üyesi değilse, otomatik olarak üye yap
+    if (!isUserMember) {
+      console.log('Kullanıcı kanala otomatik üye yapılıyor');
+      channel.members.push(req.user._id);
+      await channel.save();
+      console.log('Kullanıcı kanala üye yapıldı');
     }
     
     // Son 50 mesajı getir
     const messages = await Message.find({ channel: channelId })
       .sort({ createdAt: -1 })
       .limit(50);
-      
-    res.json(messages.reverse()); // Kronolojik sırayla döndür
+    
+    console.log('Bulunan mesaj sayısı:', messages.length);
+    
+    // Mesaj ID'lerini string'e çevir ve Frontend'e gönder
+    const formattedMessages = messages.map(msg => ({
+      _id: msg._id,
+      content: msg.content,
+      userId: String(msg.user), // String'e çevir
+      username: msg.username,
+      channelId: String(msg.channel),
+      createdAt: msg.createdAt
+    }));
+    
+    res.json(formattedMessages.reverse()); // Kronolojik sırayla döndür
   } catch (error) {
+    console.error('getChannelMessages hatası:', error.message);
     res.status(400).send(error.message);
   }
 };

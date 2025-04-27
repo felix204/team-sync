@@ -22,7 +22,7 @@ const messageHandler = (io, socket, activeUsers) => {
       }
       
       // Güvenlik kontrolü - kullanıcı ID'leri eşleşiyor mu
-      if (user.userId !== userId) {
+      if (String(user.userId) !== String(userId)) {
         socket.emit('message_error', 'Yetkilendirme hatası');
         return;
       }
@@ -59,7 +59,7 @@ const messageHandler = (io, socket, activeUsers) => {
         _id: message._id,
         content: message.content,
         username: user.username,
-        userId: message.user,
+        userId: String(userId),
         channelId: message.channel,
         createdAt: message.createdAt
       });

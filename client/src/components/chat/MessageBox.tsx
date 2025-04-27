@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '@/context/SocketContext';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
+import axios from 'axios';
 
 interface MessageBoxProps {
   channelId: string;
@@ -15,30 +16,53 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { socket, isConnected, messages, sendMessage, joinChannel, leaveChannel } = useSocket();
+  const { socket, isConnected, messages, sendMessage, joinChannel, leaveChannel, fetchChannelMessages } = useSocket();
   const { user } = useSelector((state: RootState) => state.auth);
+  
+  // Fallback mesaj çekme fonksiyonu (fetchChannelMessages olmadığında)
+  const fetchMessagesManually = useCallback(async (channelId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5000';
+      const response = await axios.get(`${SERVER_URL}/api/channels/${channelId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log('Manuel olarak mesajlar alındı:', response.data.length);
+      
+      // Mesajları socket context'e eklemenin bir yolu yok, sadece yerel state kullanabilirsiniz
+      // Bu sadece acil bir çözüm, ideal değil
+    } catch (error) {
+      console.error('Manuel mesaj çekme hatası:', error);
+    }
+  }, []);
   
   // fetchRemainingMessages için useCallback kullan
   const fetchRemainingMessages = useCallback(async () => {
     if (!user) return;
     
     try {
-      // Şimdilik ağ çağrısını devre dışı bırakalım ve sabit bir değer kullanılalım
-      // Gerçek API hazır olduğunda bu kısmı açalım
-      // const response = await fetch(`/api/users/message-count`, {
-      //   headers: {
-      //     Authorization: `Bearer ${localStorage.getItem('token')}`
-      //   }
-      // });
-      // const data = await response.json();
-      // setRemainingMessages(50 - data.count);
-      
       // Şimdilik sabit bir değer kullanıyoruz
       setRemainingMessages(50);
     } catch (error) {
       console.error('Mesaj hakkı sorgulanamadı:', error);
     }
   }, [user]);
+  
+  // Sayfayı yüklediğimizde mesajları çek
+  useEffect(() => {
+    if (channelId && isConnected) {
+      if (typeof fetchChannelMessages === 'function') {
+        console.log('fetchChannelMessages ile mesajlar çekiliyor');
+        fetchChannelMessages(channelId);
+      } else {
+        console.log('fetchChannelMessages bulunamadı, manuel çekme deneniyor');
+        fetchMessagesManually(channelId);
+      }
+    }
+  }, [channelId, isConnected, fetchChannelMessages, fetchMessagesManually]);
   
   // Kanala katılma - daha az bağımlılıkla
   useEffect(() => {
@@ -117,6 +141,14 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
+  // Kullanıcı ID karşılaştırma yardımcı fonksiyonu
+  const isCurrentUserMessage = (messageUserId: string): boolean => {
+    if (!user || !user.id) return false;
+    
+    // Her ikisini de string olarak karşılaştır
+    return String(messageUserId) === String(user.id);
+  };
+  
   return (
     <div className="flex flex-col h-full">
       {/* Mesajlar */}
@@ -126,26 +158,30 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
             Henüz mesaj yok. İlk mesajı siz gönderin!
           </div>
         ) : (
-          messages.map((message, index) => (
-            <div 
-              key={message._id || index}
-              className={`flex ${message.userId === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-3/4 rounded-lg p-3 ${
-                message.userId === user?.id 
-                  ? 'bg-[var(--brand)] text-white'
-                  : 'bg-[var(--background-secondary)] text-[var(--text-normal)]'
-              }`}>
-                <div className="font-semibold text-xs">
-                  {message.username}
-                </div>
-                <div>{message.content}</div>
-                <div className="text-xs opacity-70 text-right">
-                  {new Date(message.createdAt || Date.now()).toLocaleTimeString()}
+          messages.map((message, index) => {
+            const isOwnMessage = isCurrentUserMessage(message.userId);
+            
+            return (
+              <div 
+                key={message._id || index}
+                className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-3/4 rounded-lg p-3 ${
+                  isOwnMessage
+                    ? 'bg-[var(--brand)] text-white'
+                    : 'bg-[var(--background-secondary)] text-[var(--text-normal)]'
+                }`}>
+                  <div className="font-semibold text-xs">
+                    {message.username}
+                  </div>
+                  <div>{message.content}</div>
+                  <div className="text-xs opacity-70 text-right">
+                    {new Date(message.createdAt || Date.now()).toLocaleTimeString()}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         
         {typingUsers.length > 0 && (
