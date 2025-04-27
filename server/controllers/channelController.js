@@ -105,8 +105,7 @@ const getChannelMessages = async (req, res) => {
       
     res.json(messages.reverse()); // Kronolojik sırayla döndür
   } catch (error) {
-    res.status(400);
-    throw new Error(error.message);
+    res.status(400).send(error.message);
   }
 };
 
