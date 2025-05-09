@@ -10,10 +10,10 @@ const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Tüm rotalarda auth gerekli
+
 router.use(protect);
 
-// Kanal route'ları
+
 router.route('/')
   .get(getChannels)
   .post(createChannel);

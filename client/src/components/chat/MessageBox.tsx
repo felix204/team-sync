@@ -51,7 +51,7 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
     }
   };
   
-  // Fallback mesaj çekme fonksiyonu (fetchChannelMessages olmadığında)
+
   const fetchMessagesManually = useCallback(async (channelId: string) => {
     try {
       const token = localStorage.getItem('token');
@@ -64,26 +64,25 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
       
       console.log('Manuel olarak mesajlar alındı:', response.data.length);
       
-      // Mesajları socket context'e eklemenin bir yolu yok, sadece yerel state kullanabilirsiniz
-      // Bu sadece acil bir çözüm, ideal değil
+
     } catch (error) {
       console.error('Manuel mesaj çekme hatası:', error);
     }
   }, []);
   
-  // fetchRemainingMessages için useCallback kullan
+
   const fetchRemainingMessages = useCallback(async () => {
     if (!user) return;
     
     try {
-      // Şimdilik sabit bir değer kullanıyoruz
+
       setRemainingMessages(50);
     } catch (error) {
       console.error('Mesaj hakkı sorgulanamadı:', error);
     }
   }, [user]);
   
-  // Sayfayı yüklediğimizde mesajları çek
+
   useEffect(() => {
     if (channelId && isConnected) {
       if (typeof fetchChannelMessages === 'function') {
@@ -96,7 +95,7 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
     }
   }, [channelId, isConnected, fetchChannelMessages, fetchMessagesManually]);
   
-  // Kanala katılma - daha az bağımlılıkla
+
   useEffect(() => {
     if (channelId && socket && isConnected) {
       joinChannel(channelId);
@@ -108,7 +107,7 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
     }
   }, [channelId, socket, isConnected, joinChannel, leaveChannel, fetchRemainingMessages]);
   
-  // Yazıyor... bildirimi - typingUsers bağımlılığını kaldırıldı
+
   useEffect(() => {
     if (!socket) return;
     
@@ -118,7 +117,7 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
         return [...prev, data.username];
       });
       
-      // 3 saniye sonra kaldır
+
       setTimeout(() => {
         setTypingUsers(prev => prev.filter(name => name !== data.username));
       }, 3000);
@@ -131,7 +130,7 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
     };
   }, [socket]);
   
-  // Mesaj limiti bildirimi
+
   useEffect(() => {
     if (!socket) return;
     
@@ -146,7 +145,7 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
     };
   }, [socket]);
   
-  // Mesaj gönderme
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -154,12 +153,12 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
       sendMessage(input.trim(), channelId);
       setInput('');
       
-      // Kalan mesaj hakkını güncelle
+      
       setRemainingMessages(prev => Math.max(0, prev - 1));
     }
   };
   
-  // Typing bildirimi
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
     
@@ -168,16 +167,16 @@ export default function MessageBox({ channelId }: MessageBoxProps) {
     }
   };
   
-  // Mesajları otomatik kaydır
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [socketMessages]);
   
-  // Kullanıcı ID karşılaştırma yardımcı fonksiyonu
+
   const isCurrentUserMessage = (messageUserId: string): boolean => {
     if (!user || !user.id) return false;
     
-    // Her ikisini de string olarak karşılaştır
+
     return String(messageUserId) === String(user.id);
   };
   

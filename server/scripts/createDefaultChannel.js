@@ -3,10 +3,10 @@ const dotenv = require('dotenv');
 const Channel = require('../model/channelModel');
 const User = require('../model/userModel');
 
-// Environment variables
+
 dotenv.config();
 
-// Connect to database
+
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => {
@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 const createDefaultChannel = async () => {
   try {
-    // Önce genel kanalının var olup olmadığını kontrol et
+
     const existingChannel = await Channel.findOne({ name: 'Genel Sohbet' });
     
     if (existingChannel) {
@@ -24,7 +24,7 @@ const createDefaultChannel = async () => {
       process.exit(0);
     }
     
-    // Admin kullanıcısı bul veya oluştur
+
     let adminUser = await User.findOne({ email: 'admin@teamsync.com' });
     
     if (!adminUser) {
@@ -36,7 +36,7 @@ const createDefaultChannel = async () => {
       console.log('Admin kullanıcısı oluşturuldu');
     }
     
-    // Genel kanalı oluştur
+
     const generalChannel = await Channel.create({
       name: 'Genel Sohbet',
       description: 'Herkesin konuşabileceği genel kanal',

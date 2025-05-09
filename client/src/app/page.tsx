@@ -6,8 +6,6 @@ import { useEffect } from "react";
 export default function Home() {
   const router = useRouter();
 
-  // Bu aşamada kimlik doğrulama entegrasyonu olmadığından
-  // doğrudan login sayfasına yönlendiriyoruz
   useEffect(() => {
     router.push("/login");
   }, [router]);

@@ -42,6 +42,19 @@ export default function LoginPage() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-4">
+        <p className="text-yellow-200 font-bold">ÖNEMLİ UYARI!</p>
+        <p className="text-yellow-100 mt-2">
+          Bu site Render üzerinde barındırılmaktadır ve ilk istekte uyku modundan uyanması gerekmektedir.
+          Lütfen giriş/kayıt işlemini yaptıktan sonra sayfayı yenileyip tekrar yapınız.
+        </p>
+      </div>
+      <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-4">
+        
+        <p className="text-yellow-100 mt-2">
+          Bu bir uygulama hatası değil, render üzerinde barındırlma politikası gereği bu şekilde yapılmaktadır.
+        </p>
+      </div>
       {error && (
         <div className="bg-red-500/10 text-red-500 p-3 rounded-md text-sm">
           {error}

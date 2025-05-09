@@ -73,9 +73,6 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-// @desc    Kullanıcının günlük mesaj sayısını döndür
-// @route   GET /api/users/message-count
-// @access  Private
 const getMessageCount = async (req, res) => {
   try {
     const today = new Date();
